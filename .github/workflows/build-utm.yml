@@ -126,6 +126,17 @@ jobs:
           path: ${{ env.SRC }}/sysroot-${{ env.PLATFORM }}-${{ env.ARCH }}
           key: ${{ steps.sysroot_cache.outputs.cache-primary-key }}
 
+      - name: Rebuild patched virglrenderer
+        if: hashFiles('utm/virglrenderer-patches/*.patch') != ''
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          brew install meson ninja || true
+          pip3 install --break-system-packages --user pyyaml mako || true
+          cd "$SRC"
+          "$GITHUB_WORKSPACE/utm/rebuild_virglrenderer.sh" "$GITHUB_WORKSPACE/utm/virglrenderer-patches" "$PLATFORM" "$ARCH" \
+            2>&1 | tee "$GITHUB_WORKSPACE/build/virgl-rebuild.log"
+
       # ---- app -------------------------------------------------------------------------
 
       - name: Build UTM (unsigned archive)
@@ -173,6 +184,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: utm-build-log-${{ github.sha }}
-          path: build/xcodebuild-utm.log
+          path: |
+            build/xcodebuild-utm.log
+            build/virgl-rebuild.log
           if-no-files-found: ignore
           retention-days: 7

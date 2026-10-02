@@ -1,0 +1,43 @@
+diff --git a/src/mesa/util/anon_file.c b/src/mesa/util/anon_file.c
+index c363891..216c7e0 100644
+--- a/src/mesa/util/anon_file.c
++++ b/src/mesa/util/anon_file.c
+@@ -47,6 +47,7 @@
+ #endif
+ 
+ #if defined(__APPLE__)
++#include <limits.h>
+ #ifndef PSHMNAMLEN
+ #define PSHMNAMLEN (31)
+ #endif
+@@ -179,6 +180,30 @@ os_create_anonymous_file(off_t size, const char *debug_name)
+      if (errno != EEXIST)
+        break;
+    }
++   if (fd < 0) {
++      /* VMLab fork: iOS apps that are not signed with the app group (e.g. sideloaded with a
++       * free Apple ID) may not use POSIX shared memory at all. On iOS QEMU runs inside the app
++       * process, so the memory does not have to be shareable across processes: an unlinked
++       * regular file in a writable directory gives an fd with identical MAP_SHARED semantics. */
++      const int shm_errno = errno;
++      const char *dir = getenv("XDG_RUNTIME_DIR");
++      if (!dir || !dir[0])
++         dir = getenv("TMPDIR");
++      if (dir && dir[0]) {
++         char path[PATH_MAX];
++         snprintf(path, sizeof(path), "%s/%s-XXXXXX", dir, tag);
++         fd = mkstemp(path);
++         if (fd >= 0) {
++            fcntl(fd, F_SETFD, FD_CLOEXEC);
++            unlink(path);
++         }
++         fprintf(stderr, "virgl: shm_open failed (%s); file-backed fallback in %s %s\n",
++                 strerror(shm_errno), dir, fd >= 0 ? "ok" : strerror(errno));
++      } else {
++         fprintf(stderr, "virgl: shm_open failed (%s) and no XDG_RUNTIME_DIR/TMPDIR for fallback\n",
++                 strerror(shm_errno));
++      }
++   }
+ #elif defined(__OpenBSD__)
+    char template[] = "/tmp/mesa-XXXXXXXXXX";
+    fd = shm_mkstemp(template);
