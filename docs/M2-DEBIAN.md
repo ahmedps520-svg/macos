@@ -1,5 +1,8 @@
 # M2d (take 2) — Debian 13 desktop with GPU acceleration
 
+> **Result on device (2026-10-02):** works. `glxinfo -B` reports `OpenGL renderer string: virgl`,
+> `glxgears` ~870 FPS. See `DEVICE.md`.
+
 Alpine's Mesa leaves out the virgl OpenGL driver, so GPU acceleration can't work there.
 Debian 13 ("trixie") includes it. Goal: install Debian 13 with the light **Xfce** desktop in the
 UTM fork, then confirm OpenGL is drawn by the iPad GPU:
@@ -65,7 +68,7 @@ confirm. UTM's key row has the arrow keys and Tab.
 | Partitioning | **Guided – use entire disk** › the 20 GB disk › **All files in one partition** › **Finish partitioning…** › **Yes** |
 | Package manager mirror | Saudi Arabia (or **deb.debian.org**) › proxy empty |
 | Popularity contest | No |
-| **Software selection** | Untick **GNOME**. Tick **Xfce**. Keep **Debian desktop environment** and **standard system utilities** ticked. Continue |
+| **Software selection** | Untick **GNOME**. Tick **Xfce**. Keep **Debian desktop environment** and **standard system utilities** ticked. Use arrows to move and **Space** to tick; **Return confirms the whole screen immediately** (accepting GNOME), so press Tab to Continue and Return only at the end |
 
 The "Installing software" step is the long one (could be an hour or more). Leave it.
 
@@ -73,9 +76,17 @@ The "Installing software" step is the long one (could be an hour or more). Leave
 **eject** the Debian ISO so the VM boots from the disk next time. Then press **Continue**. The
 VM reboots by itself (this is a reboot inside the VM, so StikDebug does not need to re-attach).
 
+If the installer menu ("Install", "Graphical install", ...) appears again, the ISO was still
+attached. Don't choose anything: eject it from the **disc** menu and press the toolbar's
+**Restart** button (third from the left, after Power and Pause).
+
+"Finishing the installation" can look frozen for 10–20 minutes. If UTM's own toolbar stops
+responding too, that is an app hang, not the installer: force-close UTM and report it.
+
 ## 4. First boot
 
-You should get a graphical login screen. Log in with your username and password. You are now on
+Debian's boot screen appears, then the screen can stay **black for several minutes** while the
+graphics driver and login screen start. Then you should get a graphical login screen. Log in with your username and password. You are now on
 the Xfce desktop.
 
 If the screen stays black for more than 5 minutes after the reboot, tap the VM toolbar

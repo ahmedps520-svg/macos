@@ -94,3 +94,28 @@ row, or Option+F2 on a hardware keyboard) gives a single login, which works.
 Conclusion: Phase 2 milestone 1 ("launch app → backend → create ARM64 VM → boot legitimate guest
 → framebuffer on the iPad") is **done** on iPad17,2 / iPadOS 27.0, with the guest being Linux
 (macOS is not possible on this device; see FEASIBILITY.md).
+
+## M2d — 2026-10-02, UTM fork build f6ece4a, Debian 13.7 arm64
+
+**OpenGL GPU acceleration works on this iPad.** Reported by the user from the device.
+
+| Item | Value |
+|---|---|
+| Guest | Debian 13.7 ("trixie") arm64, installed from `debian-13.7.0-arm64-netinst.iso` |
+| VM | Emulate › Linux, ARM64, 2048 MB, display card `virtio-gpu-gl-pci` (OpenGL acceleration on), 20 GiB disk |
+| UTM settings | Renderer Backend default (ANGLE Metal), Vulkan Driver default |
+| `glxinfo -B` | `OpenGL renderer string: virgl (...)` |
+| `glxgears` | about **870 FPS** average |
+| Comparison | Alpine with software rendering: `kmscube` on llvmpipe at ~42 FPS (different test; rough comparison only) |
+
+Path confirmed end to end: guest Mesa virgl → virtio-gpu → QEMU virglrenderer → ANGLE → Metal → iPad GPU.
+
+Notes from this run:
+- The first build with full log capture (f084327) froze the whole app near the end of the
+  install. f6ece4a removed the log reader's blocking write to the debugger-launched process's
+  original stderr; the install, reboot and GPU test then ran without a freeze.
+- After "Installation complete", the VM rebooted into the installer again because the ISO was
+  still attached. Ejecting it from the toolbar's disc menu and using the toolbar's Restart
+  (third button) booted the installed system. The first boot shows Debian's boot screen, then
+  black for a few minutes, then the login screen.
+- Pressing Return on the installer's Software selection screen accepts the defaults (GNOME).
