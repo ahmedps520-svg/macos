@@ -142,6 +142,13 @@ jobs:
           test -d "$GITHUB_WORKSPACE/build/UTM.xcarchive/Products/Applications/UTM.app"
           du -sh "$GITHUB_WORKSPACE/build/UTM.xcarchive/Products/Applications/UTM.app"
 
+      - name: Stamp fork commit into Info.plist
+        run: |
+          PLIST="$GITHUB_WORKSPACE/build/UTM.xcarchive/Products/Applications/UTM.app/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :VMLabForkCommit" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :VMLabForkCommit string ${GITHUB_SHA::7}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :VMLabForkCommit" "$PLIST"
+
       - name: Install ldid
         run: brew install ldid
 

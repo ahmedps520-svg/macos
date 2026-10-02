@@ -1,0 +1,226 @@
+diff --git a/Platform/Main.swift b/Platform/Main.swift
+index 09dd6bf..cf0dc3f 100644
+--- a/Platform/Main.swift
++++ b/Platform/Main.swift
+@@ -35,6 +35,11 @@ class Main {
+     static var jitAvailable = true
+     
+     static func main() {
++        #if os(iOS) && !WITH_REMOTE
++        // VMLab fork: capture stdout/stderr before QEMUKit redirects them, so its
++        // forwarded output (UTM + QEMU logs) also lands in our in-app log.
++        VMLabLog.shared.start()
++        #endif
+         #if (os(iOS) || os(visionOS)) && WITH_JIT
+         // check if we have jailbreak
+         if jb_spawn_ptrace_child(CommandLine.argc, CommandLine.unsafeArgv) {
+@@ -101,3 +106,123 @@ class Main {
+         }
+     }
+ }
++
++#if os(iOS) && !WITH_REMOTE
++import Foundation
++
++@_silgen_name("os_proc_available_memory")
++private func vmlab_os_proc_available_memory() -> Int
++
++@_silgen_name("csops")
++private func vmlab_csops(_ pid: pid_t, _ ops: UInt32, _ useraddr: UnsafeMutableRawPointer?, _ usersize: Int) -> Int32
++
++/// VMLab fork: in-memory copy of everything UTM and QEMU print, for the Logs screen.
++final class VMLabLog: ObservableObject {
++    static let shared = VMLabLog()
++
++    @Published private(set) var text: String = ""
++
++    private var pipe: Pipe?
++    private var originalStderr: FileHandle?
++    private var started = false
++    private let maxBytes = 3_000_000
++    private let lock = NSLock()
++    private var pending = ""
++    private var flushScheduled = false
++
++    private static let stamp: DateFormatter = {
++        let f = DateFormatter()
++        f.dateFormat = "HH:mm:ss.SSS"
++        return f
++    }()
++
++    private init() {}
++
++    func start() {
++        guard !started else { return }
++        started = true
++        let pipe = Pipe()
++        self.pipe = pipe
++        let savedErr = dup(STDERR_FILENO)
++        if savedErr >= 0 {
++            originalStderr = FileHandle(fileDescriptor: savedErr, closeOnDealloc: true)
++        }
++        setvbuf(stdout, nil, _IOLBF, 0)
++        setvbuf(stderr, nil, _IONBF, 0)
++        dup2(pipe.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
++        dup2(pipe.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
++        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
++            let data = handle.availableData
++            guard !data.isEmpty, let self else { return }
++            try? self.originalStderr?.write(contentsOf: data)
++            self.append(String(decoding: data, as: UTF8.self))
++        }
++        note("VMLab log capture started. \(Self.buildSummary)")
++    }
++
++    func note(_ message: String) {
++        append("\(Self.stamp.string(from: Date())) [VMLab] \(message)\n")
++    }
++
++    func clear() {
++        lock.lock(); pending = ""; lock.unlock()
++        DispatchQueue.main.async { self.text = "" }
++    }
++
++    /// Coalesce writes so a chatty guest cannot flood the main thread.
++    private func append(_ chunk: String) {
++        lock.lock()
++        pending += chunk
++        let schedule = !flushScheduled
++        flushScheduled = true
++        lock.unlock()
++        guard schedule else { return }
++        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
++            guard let self else { return }
++            self.lock.lock()
++            let out = self.pending
++            self.pending = ""
++            self.flushScheduled = false
++            self.lock.unlock()
++            self.text += out
++            if self.text.utf8.count > self.maxBytes {
++                self.text = String(self.text.suffix(self.maxBytes / 2))
++            }
++        }
++    }
++
++    static var buildSummary: String {
++        let info = Bundle.main.infoDictionary ?? [:]
++        let version = info["CFBundleShortVersionString"] as? String ?? "?"
++        let build = info["CFBundleVersion"] as? String ?? "?"
++        let fork = info["VMLabForkCommit"] as? String ?? "local"
++        return "UTM \(version) (\(build)), fork commit \(fork), bundle \(Bundle.main.bundleIdentifier ?? "?")"
++    }
++
++    static var codeSigningFlags: UInt32 {
++        var flags: UInt32 = 0
++        _ = vmlab_csops(getpid(), 0, &flags, MemoryLayout<UInt32>.size)
++        return flags
++    }
++
++    static var statusText: String {
++        let pi = ProcessInfo.processInfo
++        let v = pi.operatingSystemVersion
++        var size = 0
++        sysctlbyname("hw.machine", nil, &size, nil, 0)
++        var machine = [CChar](repeating: 0, count: max(size, 1))
++        sysctlbyname("hw.machine", &machine, &size, nil, 0)
++        let flags = codeSigningFlags
++        let debugged = (flags & 0x10000000) != 0
++        var t = ""
++        t += "device: \(String(cString: machine)), iOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion), \(pi.activeProcessorCount) cores\n"
++        t += "memory: physical \(pi.physicalMemory / 1_048_576) MB, available to app \(vmlab_os_proc_available_memory() / 1_048_576) MB\n"
++        t += "jit: launch check jitAvailable=\(Main.jitAvailable), debugger attached now=\(debugged), cs flags=0x\(String(flags, radix: 16))\n"
++        return t
++    }
++
++    func export() -> String {
++        "UTM (VMLab fork) log export\n\(Self.buildSummary)\n\(Self.statusText)\n----- log -----\n\(text)"
++    }
++}
++#endif
+diff --git a/Platform/iOS/UTMSettingsView.swift b/Platform/iOS/UTMSettingsView.swift
+index 11621fe..a44125a 100644
+--- a/Platform/iOS/UTMSettingsView.swift
++++ b/Platform/iOS/UTMSettingsView.swift
+@@ -39,10 +39,81 @@ struct UTMSettingsView: View {
+                             presentationMode.wrappedValue.dismiss()
+                         }
+                     }
++                    #if os(iOS) && !WITH_REMOTE
++                    ToolbarItem(placement: .navigationBarTrailing) {
++                        NavigationLink("Logs", destination: VMLabLogView())
++                    }
++                    #endif
++                }
++        }
++    }
++}
++
++#if os(iOS) && !WITH_REMOTE
++/// VMLab fork: live log with Copy and Export, plus device and JIT status.
++struct VMLabLogView: View {
++    @ObservedObject private var log = VMLabLog.shared
++    @State private var copied = false
++    @State private var status = VMLabLog.statusText
++
++    var body: some View {
++        ScrollViewReader { proxy in
++            ScrollView {
++                VStack(alignment: .leading, spacing: 8) {
++                    Text(VMLabLog.buildSummary)
++                        .font(.footnote.bold())
++                    Text(status)
++                        .font(.system(.footnote, design: .monospaced))
++                    Divider()
++                    Text(log.text.isEmpty ? "(empty)" : log.text)
++                        .font(.system(.caption, design: .monospaced))
++                        .frame(maxWidth: .infinity, alignment: .leading)
++                    Color.clear.frame(height: 1).id("bottom")
+                 }
++                .padding()
++            }
++            .onChange(of: log.text) { _ in
++                proxy.scrollTo("bottom")
++            }
++        }
++        .navigationTitle("Logs")
++        .toolbar {
++            ToolbarItemGroup(placement: .navigationBarTrailing) {
++                Button(copied ? "Copied" : "Copy") {
++                    UIPasteboard.general.string = log.export()
++                    copied = true
++                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copied = false }
++                }
++                Button("Export") {
++                    exportLog()
++                }
++                Button("Refresh") {
++                    status = VMLabLog.statusText
++                }
++            }
++        }
++    }
++
++    private func exportLog() {
++        let url = FileManager.default.temporaryDirectory
++            .appendingPathComponent("UTM-VMLab-log-\(Int(Date().timeIntervalSince1970)).txt")
++        do {
++            try log.export().write(to: url, atomically: true, encoding: .utf8)
++        } catch {
++            log.note("export failed: \(error)")
++            return
+         }
++        let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
++        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first,
++              let root = (scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first)?.rootViewController else { return }
++        var top = root
++        while let presented = top.presentedViewController { top = presented }
++        activity.popoverPresentationController?.sourceView = top.view
++        activity.popoverPresentationController?.sourceRect = CGRect(x: top.view.bounds.maxX - 40, y: 40, width: 1, height: 1)
++        top.present(activity, animated: true)
+     }
+ }
++#endif
+ 
+ struct UTMSettingsView_Previews: PreviewProvider {
+     static var previews: some View {
