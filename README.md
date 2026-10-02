@@ -15,7 +15,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 | M1b | JIT enabled via StikDebug, reported in-app | **done** (confirmed on device 2026-10-02, test returned 42) |
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | **done** (Alpine 3.24 aarch64 booted in the UTM fork on device 2026-10-02) |
 | M2d | GPU: OpenGL in the guest rendered by the iPad GPU (virgl → ANGLE → Metal) | **done** (Debian 13 + `glxinfo`: virgl, `glxgears` ~870 FPS, on device 2026-10-02) |
-| M2e | Vulkan in the guest via Venus (MoltenVK/KosmicKrisp → Metal) | in progress |
+| M2e | Vulkan in the guest via Venus (MoltenVK/KosmicKrisp → Metal) | in progress: Venus failed on shm_open (iOS sandbox); fix in build 39c9361, awaiting device test |
 
 ## Layout
 
@@ -24,6 +24,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `scripts/package_ipa.sh` — turns the unsigned archive into a fake-signed `.ipa`.
 - `.github/workflows/build-ios.yml` — builds `VMLab.ipa` on a macOS runner, no Apple signing.
 - `utm/UPSTREAM`, `utm/patches/` — our UTM fork: a pinned upstream UTM commit plus a patch series.
+- `utm/virglrenderer-patches/`, `utm/rebuild_virglrenderer.sh` — patches to UTM's GPU library and the CI step that rebuilds only that library.
 - `.github/workflows/build-utm.yml` — builds the UTM fork into an unsigned `UTM-fork-*.ipa`.
 - `docs/FEASIBILITY.md` — Phase 1 research and verdicts.
 - `docs/SIDELOAD-WINDOWS.md` — how to install a build from Windows.

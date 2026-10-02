@@ -7,6 +7,19 @@ Vulkan to Metal. The guest kernel already advertised the Venus capability (cap s
 On Alpine, Venus failed at `vkCreateInstance` with `ERROR_OUT_OF_HOST_MEMORY`; this test repeats
 it on Debian with a mainstream Mesa.
 
+## First result (2026-10-02, build f6ece4a) and fix
+
+On device, `vulkaninfo` failed with `ERROR_OUT_OF_HOST_MEMORY`. With `VN_DEBUG=init,result` the
+guest showed `connected to renderer` ... `failed to allocate/map ring shmem`. Software Vulkan
+(lavapipe) works when selected alone, so only Venus fails. Cause (from UTM's virglrenderer
+source): the shared ring buffer is created with `shm_open`, which iOS only allows under the app's
+App Group prefix, and our sideloaded IPA has no App Group entitlement. Fix: virglrenderer patch
+`utm/virglrenderer-patches/0001-ios-anon-file-fallback.patch` falls back to an unlinked file in
+UTM's temp directory; CI rebuilds only virglrenderer (build **39c9361** and later). Not yet
+confirmed on device.
+
+**Install the UTM fork build 39c9361 or newer before repeating the steps below.**
+
 ## Steps (inside Debian 13, Terminal Emulator)
 
 Start the VM as usual (StikDebug › Enable JIT › UTM › **legacy**, then ▶), log in, open Terminal.
