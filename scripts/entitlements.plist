@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Fake-signed entitlements. The sideloading tool (Sideloadly, AltStore, SideStore)
+	     re-signs the app with the user's free Apple ID and keeps what the profile allows.
+	     get-task-allow is what JIT enablers need; the memory entitlement raises the jetsam limit. -->
+	<key>get-task-allow</key>
+	<true/>
+	<key>com.apple.developer.kernel.increased-memory-limit</key>
+	<true/>
+</dict>
+</plist>

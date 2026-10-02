@@ -1,0 +1,87 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['docs/**', '**.md']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned VMLab.ipa
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      SCHEME: VMLab
+      ARCHIVE: build/VMLab.xcarchive
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcode-select -p
+
+      - name: Install XcodeGen and ldid
+        run: brew install xcodegen ldid
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Archive (unsigned)
+        run: |
+          mkdir -p build
+          GIT_SHA="${GITHUB_SHA::7}"
+          BUILD_DATE="$(date -u +%Y-%m-%dT%H:%MZ)"
+          if ! xcodebuild \
+            -project VMLab.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            GIT_SHA="$GIT_SHA" \
+            BUILD_DATE="$BUILD_DATE" \
+            > build/xcodebuild.log 2>&1; then
+            echo "::error::xcodebuild failed; last 120 lines follow"
+            tail -n 120 build/xcodebuild.log
+            exit 1
+          fi
+          grep -E 'warning: ' build/xcodebuild.log | sort -u | head -n 50 || true
+          test -d "$ARCHIVE/Products/Applications/VMLab.app"
+          echo "archive ok: commit $GIT_SHA built $BUILD_DATE"
+
+      - name: Package IPA
+        run: scripts/package_ipa.sh "$ARCHIVE" build/VMLab.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VMLab-ipa-${{ github.sha }}
+          path: build/VMLab.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log-${{ github.sha }}
+          path: build/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7

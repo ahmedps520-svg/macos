@@ -1,0 +1,50 @@
+# XcodeGen spec. The .xcodeproj is generated on the CI runner (`xcodegen generate`),
+# so nothing hand-written in the project file can drift.
+name: VMLab
+options:
+  bundleIdPrefix: dev.ahmedps520
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "2"          # iPad only
+    SUPPORTS_MACCATALYST: NO
+    CODE_SIGNING_ALLOWED: NO             # unsigned archive; sideloader re-signs
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+    GIT_SHA: "local"                     # overridden by CI: xcodebuild ... GIT_SHA=abc1234
+    BUILD_DATE: "unknown"                # overridden by CI
+targets:
+  VMLab:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/VMLab
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ahmedps520.vmlab
+        PRODUCT_NAME: VMLab
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/VMLab/CSupport/VMLab-Bridging-Header.h
+        GENERATE_INFOPLIST_FILE: NO
+        OTHER_LDFLAGS: "-framework Security"
+    info:
+      path: Sources/VMLab/Info.plist
+      properties:
+        CFBundleDisplayName: VMLab
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        VMLabGitSHA: $(GIT_SHA)
+        VMLabBuildDate: $(BUILD_DATE)
+        ITSAppUsesNonExemptEncryption: false
