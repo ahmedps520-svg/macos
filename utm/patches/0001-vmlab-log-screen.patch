@@ -1,5 +1,5 @@
 diff --git a/Platform/Main.swift b/Platform/Main.swift
-index 09dd6bf..20e8568 100644
+index 09dd6bf..b27b455 100644
 --- a/Platform/Main.swift
 +++ b/Platform/Main.swift
 @@ -24,6 +24,12 @@ let logger = Logger(label: "com.utmapp.UTM") { label in
@@ -30,7 +30,7 @@ index 09dd6bf..20e8568 100644
          #if (os(iOS) || os(visionOS)) && WITH_JIT
          // check if we have jailbreak
          if jb_spawn_ptrace_child(CommandLine.argc, CommandLine.unsafeArgv) {
-@@ -101,3 +115,123 @@ class Main {
+@@ -101,3 +115,125 @@ class Main {
          }
      }
  }
@@ -51,7 +51,6 @@ index 09dd6bf..20e8568 100644
 +    @Published private(set) var text: String = ""
 +
 +    private var pipe: Pipe?
-+    private var originalStderr: FileHandle?
 +    private var started = false
 +    private let maxBytes = 3_000_000
 +    private let lock = NSLock()
@@ -71,10 +70,10 @@ index 09dd6bf..20e8568 100644
 +        started = true
 +        let pipe = Pipe()
 +        self.pipe = pipe
-+        let savedErr = dup(STDERR_FILENO)
-+        if savedErr >= 0 {
-+            originalStderr = FileHandle(fileDescriptor: savedErr, closeOnDealloc: true)
-+        }
++        // Do NOT forward to the original stderr: when UTM is launched by a debugger that later
++        // detaches (StikDebug), nothing drains that fd, a blocking write there stalls this
++        // reader, the pipes fill, and every NSLog/printf in the app (incl. the main thread)
++        // blocks. Our reader must only ever drain into memory.
 +        setvbuf(stdout, nil, _IOLBF, 0)
 +        setvbuf(stderr, nil, _IONBF, 0)
 +        dup2(pipe.fileHandleForWriting.fileDescriptor, STDOUT_FILENO)
@@ -82,7 +81,6 @@ index 09dd6bf..20e8568 100644
 +        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
 +            let data = handle.availableData
 +            guard !data.isEmpty, let self else { return }
-+            try? self.originalStderr?.write(contentsOf: data)
 +            self.append(String(decoding: data, as: UTF8.self))
 +        }
 +        note("VMLab log capture started. \(Self.buildSummary)")
@@ -101,6 +99,10 @@ index 09dd6bf..20e8568 100644
 +    private func append(_ chunk: String) {
 +        lock.lock()
 +        pending += chunk
++        if pending.utf8.count > maxBytes {
++            // a flood the main thread hasn't caught up with yet; keep only the newest part
++            pending = String(pending.suffix(maxBytes / 2))
++        }
 +        let schedule = !flushScheduled
 +        flushScheduled = true
 +        lock.unlock()
