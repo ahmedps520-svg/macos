@@ -11,8 +11,8 @@ guest** under QEMU with JIT, building on UTM's engine.
 
 | Milestone | Description | State |
 |---|---|---|
-| M1a | CI-built IPA installs from Windows, opens to a status/log screen | in progress |
-| M1b | JIT enabled via StikDebug, reported in-app | not started |
+| M1a | CI-built IPA installs from Windows, opens to a status/log screen | **done** (confirmed on device 2026-10-02, see docs/DEVICE.md) |
+| M1b | JIT enabled via StikDebug, reported in-app | in progress |
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | not started |
 
 ## Layout
@@ -23,5 +23,6 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `.github/workflows/build-ios.yml` — builds `VMLab.ipa` on a macOS runner, no Apple signing.
 - `docs/FEASIBILITY.md` — Phase 1 research and verdicts.
 - `docs/SIDELOAD-WINDOWS.md` — how to install a build from Windows.
+- `docs/DEVICE.md` — facts confirmed from logs on the real iPad.
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.
