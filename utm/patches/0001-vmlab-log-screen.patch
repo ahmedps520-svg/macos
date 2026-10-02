@@ -1,20 +1,36 @@
 diff --git a/Platform/Main.swift b/Platform/Main.swift
-index 09dd6bf..cf0dc3f 100644
+index 09dd6bf..20e8568 100644
 --- a/Platform/Main.swift
 +++ b/Platform/Main.swift
-@@ -35,6 +35,11 @@ class Main {
+@@ -24,6 +24,12 @@ let logger = Logger(label: "com.utmapp.UTM") { label in
+     utmLogger.logLevel = .debug
+     stdOutLogger.logLevel = .debug
+     #endif
++    #if os(iOS) && !WITH_REMOTE
++    // VMLab fork: keep UTM's detailed messages for the in-app Logs screen. They reach it
++    // through NSLog (see CFLOG_FORCE_STDERR below); silence the duplicate stdout copy.
++    utmLogger.logLevel = .debug
++    stdOutLogger.logLevel = .critical
++    #endif
+     return MultiplexLogHandler([
+         utmLogger,
+         stdOutLogger
+@@ -35,6 +41,14 @@ class Main {
      static var jitAvailable = true
      
      static func main() {
 +        #if os(iOS) && !WITH_REMOTE
-+        // VMLab fork: capture stdout/stderr before QEMUKit redirects them, so its
-+        // forwarded output (UTM + QEMU logs) also lands in our in-app log.
++        // VMLab fork: make NSLog/CFLog (used by UTMLog, QEMULogging, MoltenVK) also write to
++        // stderr; on iOS they otherwise go only to the unified system log.
++        setenv("CFLOG_FORCE_STDERR", "1", 1)
++        // Capture stdout/stderr before QEMUKit redirects them, so its forwarded output
++        // (UTM + QEMU logs) also lands in our in-app log.
 +        VMLabLog.shared.start()
 +        #endif
          #if (os(iOS) || os(visionOS)) && WITH_JIT
          // check if we have jailbreak
          if jb_spawn_ptrace_child(CommandLine.argc, CommandLine.unsafeArgv) {
-@@ -101,3 +106,123 @@ class Main {
+@@ -101,3 +115,123 @@ class Main {
          }
      }
  }

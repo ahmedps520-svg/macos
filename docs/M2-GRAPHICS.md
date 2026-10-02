@@ -1,5 +1,13 @@
 # M2d — GPU acceleration test (OpenGL through virgl → ANGLE → Metal)
 
+> **Result on device (2026-10-02):** the guest kernel reported `+virgl +resource_blob +host_visible
+> +context_init` and created `/dev/dri/card0`, but `kmscube` rendered with **llvmpipe** (software,
+> ~42 fps). Cause: Alpine 3.24's Mesa is built without the `virgl` gallium driver (its aarch64
+> list is vc4, v3d, freedreno, lima, panfrost, etnaviv, tegra, asahi, svga, zink, llvmpipe, ...).
+> Venus Vulkan (`mesa-vulkan-virtio` + `vulkan-loader`) failed at `vkCreateInstance` with
+> `ERROR_OUT_OF_HOST_MEMORY`; not investigated further. Continued with Debian 13 in
+> `M2-DEBIAN.md`.
+
 Goal: prove that 3D graphics drawn inside the Linux VM are rendered by your iPad's GPU, not
 emulated in software. We use the Alpine VM from M1c, switch its display card to the
 GPU-accelerated one, install Mesa's virtual GPU driver, and run `kmscube`, a tiny program that

@@ -14,7 +14,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 | M1a | CI-built IPA installs from Windows, opens to a status/log screen | **done** (confirmed on device 2026-10-02, see docs/DEVICE.md) |
 | M1b | JIT enabled via StikDebug, reported in-app | **done** (confirmed on device 2026-10-02, test returned 42) |
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | **done** (Alpine 3.24 aarch64 booted in the UTM fork on device 2026-10-02) |
-| M2d | GPU: OpenGL in the guest rendered by the iPad GPU (virgl → ANGLE → Metal), `kmscube` | in progress |
+| M2d | GPU: OpenGL in the guest rendered by the iPad GPU (virgl → ANGLE → Metal) | in progress: Alpine's Mesa lacks virgl (software fallback, 42 fps llvmpipe); moving to Debian 13 + Xfce |
 
 ## Layout
 
@@ -29,7 +29,8 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `docs/DEVICE.md` — facts confirmed from logs on the real iPad.
 - `docs/JIT-STIKDEBUG.md` — how to enable JIT with StikDebug (M1b).
 - `docs/M1C-BOOT-LINUX.md` — install the UTM fork and boot Alpine Linux (M1c).
-- `docs/M2-GRAPHICS.md` — GPU acceleration test with kmscube (M2d).
+- `docs/M2-GRAPHICS.md` — first GPU test on Alpine (M2d), and why it fell back to software.
+- `docs/M2-DEBIAN.md` — install Debian 13 + Xfce and test GPU acceleration (M2d take 2).
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.
 
