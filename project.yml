@@ -36,6 +36,8 @@ targets:
       path: Sources/VMLab/Info.plist
       properties:
         CFBundleDisplayName: VMLab
+        LSRequiresIPhoneOS: true
+        UIRequiredDeviceCapabilities: [arm64]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
