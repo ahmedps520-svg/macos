@@ -1,0 +1,10 @@
+# Pinned upstream UTM source for the fork. CI clones exactly this commit and applies
+# utm/patches/*.patch on top, in name order.
+UTM_REPO=https://github.com/utmapp/UTM.git
+UTM_TAG=v5.0.5
+UTM_COMMIT=b6f7475be54f9cb542c46b131319454b83489ced
+# GitHub Actions run of utmapp/UTM that built the v5.0.5 release; it published the
+# prebuilt dependency bundle ("Sysroot-ios-arm64"). Artifacts expire ~90 days after
+# 2026-09-02, so expect this to stop working around early December 2026; CI then falls
+# back to building the sysroot itself.
+UPSTREAM_SYSROOT_RUN_ID=33593908499

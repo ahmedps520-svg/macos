@@ -1,0 +1,171 @@
+name: Build UTM fork (iOS)
+
+# Builds UTM for iOS from the upstream commit pinned in utm/UPSTREAM plus our patches,
+# producing an unsigned UTM.ipa for free-Apple-ID sideloading. No Apple signing.
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'utm/**'
+      - '.github/workflows/build-utm.yml'
+  workflow_dispatch:
+    inputs:
+      sysroot:
+        description: 'Where the prebuilt dependencies come from'
+        type: choice
+        options: [upstream, build]
+        default: upstream
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: build-utm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned UTM.ipa
+    runs-on: macos-26
+    timeout-minutes: 350
+    env:
+      SRC: upstream-utm
+      PLATFORM: ios
+      ARCH: arm64
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Read pinned upstream
+        run: |
+          grep -E '^[A-Z_]+=' utm/UPSTREAM >> "$GITHUB_ENV"
+          cat utm/UPSTREAM
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          df -h / | tail -1
+
+      - name: Clone upstream UTM at pinned commit
+        run: |
+          git clone --depth 1 --branch "$UTM_TAG" "$UTM_REPO" "$SRC"
+          actual="$(git -C "$SRC" rev-parse HEAD)"
+          echo "upstream HEAD: $actual"
+          if [ "$actual" != "$UTM_COMMIT" ]; then
+            echo "::error::tag $UTM_TAG now points at $actual, expected $UTM_COMMIT"
+            exit 1
+          fi
+
+      - name: Apply our patches
+        run: |
+          shopt -s nullglob
+          patches=(utm/patches/*.patch)
+          if [ ${#patches[@]} -eq 0 ]; then echo "no patches"; exit 0; fi
+          for p in "${patches[@]}"; do
+            echo "applying $p"
+            git -C "$SRC" apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p"
+          done
+          git -C "$SRC" status --short | head -50
+
+      # ---- dependencies (sysroot) ------------------------------------------------------
+
+      - name: Download upstream prebuilt sysroot
+        id: upstream_sysroot
+        if: github.event.inputs.sysroot != 'build'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: Sysroot-${{ env.PLATFORM }}-${{ env.ARCH }}
+          repository: utmapp/UTM
+          run-id: ${{ env.UPSTREAM_SYSROOT_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ env.SRC }}
+
+      - name: Extract upstream sysroot
+        id: extract
+        if: steps.upstream_sysroot.outcome == 'success'
+        run: |
+          cd "$SRC"
+          tar -xf sysroot.tgz
+          rm sysroot.tgz
+          ls -d sysroot-*
+          du -sh "sysroot-$PLATFORM-$ARCH"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Restore self-built sysroot cache
+        id: sysroot_cache
+        if: steps.extract.outputs.ok != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.SRC }}/sysroot-${{ env.PLATFORM }}-${{ env.ARCH }}
+          key: sysroot-${{ env.PLATFORM }}-${{ env.ARCH }}-${{ env.UTM_COMMIT }}-${{ hashFiles('utm/patches/**') }}
+
+      - name: Install dependency build requirements
+        if: steps.extract.outputs.ok != 'true' && steps.sysroot_cache.outputs.cache-hit != 'true'
+        run: |
+          echo "::warning::upstream sysroot unavailable; building dependencies from source (slow)"
+          brew uninstall cmake || true
+          brew install bison pkg-config gettext glib-utils libgpg-error nasm make meson cmake
+          brew install llvm spirv-llvm-translator libxcb libxrandr
+          pip3 install --break-system-packages --user six pyparsing pyyaml setuptools distlib mako
+          echo "/usr/local/opt/bison/bin:/opt/homebrew/opt/bison/bin" >> "$GITHUB_PATH"
+
+      - name: Build sysroot from source
+        if: steps.extract.outputs.ok != 'true' && steps.sysroot_cache.outputs.cache-hit != 'true'
+        run: |
+          cd "$SRC"
+          ./scripts/build_dependencies.sh -p "$PLATFORM" -a "$ARCH"
+
+      - name: Save self-built sysroot cache
+        if: steps.extract.outputs.ok != 'true' && steps.sysroot_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SRC }}/sysroot-${{ env.PLATFORM }}-${{ env.ARCH }}
+          key: ${{ steps.sysroot_cache.outputs.cache-primary-key }}
+
+      # ---- app -------------------------------------------------------------------------
+
+      - name: Build UTM (unsigned archive)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          cd "$SRC"
+          if ! ./scripts/build_utm.sh -k iphoneos -s iOS -a "$ARCH" -o "$GITHUB_WORKSPACE/build/UTM" \
+               > "$GITHUB_WORKSPACE/build/xcodebuild-utm.log" 2>&1; then
+            echo "::error::UTM build failed; last 150 lines follow"
+            tail -n 150 "$GITHUB_WORKSPACE/build/xcodebuild-utm.log"
+            exit 1
+          fi
+          grep -E 'error: ' "$GITHUB_WORKSPACE/build/xcodebuild-utm.log" | sort -u | head -20 || true
+          test -d "$GITHUB_WORKSPACE/build/UTM.xcarchive/Products/Applications/UTM.app"
+          du -sh "$GITHUB_WORKSPACE/build/UTM.xcarchive/Products/Applications/UTM.app"
+
+      - name: Install ldid
+        run: brew install ldid
+
+      - name: Package fake-signed IPA
+        run: |
+          cd "$SRC"
+          ./scripts/package.sh ipa "$GITHUB_WORKSPACE/build/UTM.xcarchive" "$GITHUB_WORKSPACE/build/ipa"
+          ls -la "$GITHUB_WORKSPACE/build/ipa"
+          SHORT="${GITHUB_SHA::7}"
+          mv "$GITHUB_WORKSPACE/build/ipa/UTM.ipa" "$GITHUB_WORKSPACE/build/UTM-fork-$SHORT.ipa"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: UTM-fork-ipa-${{ github.sha }}
+          path: build/UTM-fork-*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: utm-build-log-${{ github.sha }}
+          path: build/xcodebuild-utm.log
+          if-no-files-found: ignore
+          retention-days: 7
