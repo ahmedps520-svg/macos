@@ -46,3 +46,51 @@ JIT works on this device. Log excerpt:
 
 Conclusion: the full chain (free Apple ID → Sideloadly → StikDebug + LocalDevVPN → iOS 26
 TXM handshake) works on iPad17,2 / iPadOS 27.0. Next gate: M1c, booting a guest.
+
+## M1c — 2026-10-02, UTM fork build 393e35e (UTM v5.0.5 + patch 0001)
+
+**A legitimate ARM64 Linux guest boots on this iPad and shows its framebuffer.** Confirmed by
+screenshots from the device.
+
+Setup that worked:
+
+| Item | Value |
+|---|---|
+| App | UTM fork from CI run 37023581198 (pinned upstream v5.0.5 + Logs patch), sideloaded with Sideloadly |
+| JIT | StikDebug 3.1.13 › Enable JIT › UTM › **legacy** script (UTM v5.0.5 uses `brk #0x69`; universal.js rejects it) |
+| Guest image | `alpine-virt-3.24.2-aarch64.iso` (official, alpinelinux.org) |
+| VM | Emulate › Linux, ARM64 (aarch64), default system, 1024 MB, default cores, display output on, OpenGL off, 4 GiB disk, no shared directory |
+
+Output from inside the guest (on `/dev/tty2`):
+
+```
+Linux localhost 6.18.52-0-virt #1-Alpine SMP PREEMPT_DYNAMIC 2026-09-15 05:37:48 aarch64 Linux
+
+              total   used   free  shared  buff/cache  available
+Mem:            963     51    860      19          52        844
+Swap:             0      0      0
+
+processor       : 0
+BogoMIPS        : 125.00
+Features        : fp asimd evtstrm aes pmull sha1 sha2 crc32 cpuid
+CPU implementer : 0x41
+CPU architecture: 8
+CPU part        : 0xd08
+CPU revision    : 3
+```
+
+| Fact | Meaning |
+|---|---|
+| Kernel 6.18.52 `aarch64` | real ARM64 Linux running under QEMU TCG with JIT |
+| 963 MB total | the 1024 MB configured, minus kernel reservations |
+| CPU part `0xd08` | QEMU's emulated Cortex-A72 model (no hypervisor; pure emulation) |
+| ≥2 processors | multi-core TCG works |
+
+Quirk found: the Alpine virt ISO starts a login prompt on both `/dev/tty1` and `/dev/tty0`,
+which are the same screen. The two race for keystrokes, so logging in there loops until
+"Login timed out after 60 seconds". Switching to console 2 with **Alt+F2** (UTM's on-screen key
+row, or Option+F2 on a hardware keyboard) gives a single login, which works.
+
+Conclusion: Phase 2 milestone 1 ("launch app → backend → create ARM64 VM → boot legitimate guest
+→ framebuffer on the iPad") is **done** on iPad17,2 / iPadOS 27.0, with the guest being Linux
+(macOS is not possible on this device; see FEASIBILITY.md).

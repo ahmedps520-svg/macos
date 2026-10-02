@@ -13,7 +13,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 |---|---|---|
 | M1a | CI-built IPA installs from Windows, opens to a status/log screen | **done** (confirmed on device 2026-10-02, see docs/DEVICE.md) |
 | M1b | JIT enabled via StikDebug, reported in-app | **done** (confirmed on device 2026-10-02, test returned 42) |
-| M1c | Boot an ARM64 Linux guest and show its framebuffer | in progress: UTM fork builds in CI, waiting for on-device boot |
+| M1c | Boot an ARM64 Linux guest and show its framebuffer | **done** (Alpine 3.24 aarch64 booted in the UTM fork on device 2026-10-02) |
 
 ## Layout
 
@@ -30,3 +30,6 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `docs/M1C-BOOT-LINUX.md` — install the UTM fork and boot Alpine Linux (M1c).
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.
+
+**Next:** later-phase milestones (persistence, networking, memory ceiling, GPU) are proposed
+but not started; each will be one small, device-confirmed step.

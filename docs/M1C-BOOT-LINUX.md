@@ -52,30 +52,38 @@ start a VM again later, close UTM and repeat this whole step 3.
 
 ## 4. Create the VM (in UTM)
 
+UTM asks for the hardware first and the ISO file second.
+
 1. Tap **+** (Create a New Virtual Machine).
 2. Tap **Emulate**. ("Virtualize" is greyed out on iPad; that is expected.)
 3. Tap **Linux**.
-4. Leave **Boot from ISO image** selected. Under **Boot ISO Image** tap **Browse** and pick
-   `alpine-virt-3.24.2-aarch64.iso` from Downloads. Tap **Next**.
-5. Hardware:
+4. **Hardware** screen:
    - **Architecture**: ARM64 (aarch64).
    - **System**: leave the default.
-   - **Memory**: 1024 MB.
+   - **Memory**: 1024 MB (plenty for Alpine; keeps well inside iPadOS's memory limit for the app).
    - **CPU Cores**: leave the default.
-   - **Enable display output**: on.
+   - **Enable display output**: **on**.
    - **Enable hardware OpenGL acceleration**: **off** for this first test.
    Tap **Next**.
-6. Storage: **4** GiB. Tap **Next**.
-7. Shared Directory: skip. Tap **Next**.
-8. Summary: name it **Alpine**. Tap **Save**.
+5. **Linux** screen: **Boot Image Type** = **Boot from ISO image**. Under **Boot ISO Image** tap
+   **Browse** and pick `alpine-virt-3.24.2-aarch64.iso` from Downloads. Tap **Next**.
+6. **Storage**: **4** GiB. Tap **Next**.
+7. **Shared Directory**: leave it empty. Tap **Next**.
+8. **Summary**: name it **Alpine**. Tap **Save**.
 
 ## 5. Boot it
 
 1. Tap the **Alpine** VM, then the big **▶ play** button.
-2. You should see Linux boot messages scroll by, then a line ending in **`login:`**.
-   It can take a minute or two; emulation is slow.
-3. Type `root` and press Return (there is no password). You should get a `#` prompt.
-   (Tap the screen to bring up the keyboard if it doesn't appear.)
+2. The screen can stay **black for 1–2 minutes** while the emulated machine starts. Then boot
+   text and **`localhost login:`** appear.
+3. **Switch to console 2 before logging in:** tap the keyboard button in the VM toolbar, then in
+   UTM's row of special keys tap **Alt** then **F2** (scroll the row to find F keys), or press
+   **Option+F2** on a hardware keyboard. The screen clears and shows a login for `/dev/tty2`.
+   (On the first console, two login prompts share the screen and fight over your keystrokes,
+   so the login loops and times out.)
+4. Type `root` (lowercase), Return. At `Password:` press Return (there is no password). You get
+   a `#` prompt.
+5. Optional checks: `uname -a`, `free -m`, `cat /proc/cpuinfo | head -n 12`.
 
 ## 6. Send the result
 
@@ -92,7 +100,9 @@ UTM fork build.
 |---|---|
 | "Your version of iOS does not support running VMs while unmodified…" | UTM started without the debugger. Close UTM, start it from StikDebug (step 3) |
 | **Emulate** greyed out | Same cause as above |
+| VM window black for the first 1–2 minutes | Normal, emulation is slow. Wait |
 | VM window black, nothing happens for > 3 minutes | Send me the Logs (Settings › Logs › Copy) |
+| Login loops back to `login:` or "Login timed out after 60 seconds" | Two prompts share console 1. Press Alt+F2 and log in on console 2 |
 | UTM crashes when pressing play | Probably the universal script was chosen. Repeat step 3 with **legacy**. Then send Logs |
 | Sideloadly: maximum number of apps | Delete VMLab from the iPad, retry |
 | The ISO isn't listed in Browse | In Files, make sure the download finished (89 MB) and is in Downloads |
