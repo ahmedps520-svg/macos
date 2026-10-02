@@ -12,7 +12,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 | Milestone | Description | State |
 |---|---|---|
 | M1a | CI-built IPA installs from Windows, opens to a status/log screen | **done** (confirmed on device 2026-10-02, see docs/DEVICE.md) |
-| M1b | JIT enabled via StikDebug, reported in-app | in progress |
+| M1b | JIT enabled via StikDebug, reported in-app | **done** (confirmed on device 2026-10-02, test returned 42) |
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | not started |
 
 ## Layout

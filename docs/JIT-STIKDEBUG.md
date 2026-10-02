@@ -81,6 +81,10 @@ bug to fix on the iPad. Just pick the universal script next time.
 
 ## Troubleshooting
 
+- **Never choose StikDebug itself as the JIT target.** A debugger attaching to its own process freezes it (black screen). Force-close StikDebug and pick VMLab.
+- If StikDebug installed through iloader shows only a black screen, delete it, reinstall the IPA with Sideloadly, then **Place** the pairing file again in iloader (reinstalling wipes it).
+
+
 | Symptom | Fix |
 |---|---|
 | StikDebug: "heartbeat" or "connection dropped" | VPN off, or not on Wi-Fi. Turn LocalDevVPN on, reconnect Wi-Fi, reopen StikDebug |
