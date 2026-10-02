@@ -65,7 +65,7 @@ struct ContentView: View {
             Text(label)
             Spacer()
             Image(systemName: on ? "checkmark.circle.fill" : "xmark.circle")
-                .foregroundStyle(on ? .green : .secondary)
+                .foregroundStyle(on ? Color.green : Color.secondary)
         }
     }
 }

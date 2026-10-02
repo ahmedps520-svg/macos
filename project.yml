@@ -8,7 +8,7 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    SWIFT_VERSION: "5.9"
+    SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "2"          # iPad only
     SUPPORTS_MACCATALYST: NO
     CODE_SIGNING_ALLOWED: NO             # unsigned archive; sideloader re-signs
