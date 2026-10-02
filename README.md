@@ -15,6 +15,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 | M1b | JIT enabled via StikDebug, reported in-app | **done** (confirmed on device 2026-10-02, test returned 42) |
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | **done** (Alpine 3.24 aarch64 booted in the UTM fork on device 2026-10-02) |
 | M2d | GPU: OpenGL in the guest rendered by the iPad GPU (virgl → ANGLE → Metal) | **done** (Debian 13 + `glxinfo`: virgl, `glxgears` ~870 FPS, on device 2026-10-02) |
+| M2e | Vulkan in the guest via Venus (MoltenVK/KosmicKrisp → Metal) | in progress |
 
 ## Layout
 
@@ -31,6 +32,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `docs/M1C-BOOT-LINUX.md` — install the UTM fork and boot Alpine Linux (M1c).
 - `docs/M2-GRAPHICS.md` — first GPU test on Alpine (M2d), and why it fell back to software.
 - `docs/M2-DEBIAN.md` — install Debian 13 + Xfce and test GPU acceleration (M2d take 2).
+- `docs/M2E-VULKAN.md` — Vulkan (Venus) test in Debian (M2e).
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.
 
