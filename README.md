@@ -24,5 +24,6 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `docs/FEASIBILITY.md` — Phase 1 research and verdicts.
 - `docs/SIDELOAD-WINDOWS.md` — how to install a build from Windows.
 - `docs/DEVICE.md` — facts confirmed from logs on the real iPad.
+- `docs/JIT-STIKDEBUG.md` — how to enable JIT with StikDebug (M1b).
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.

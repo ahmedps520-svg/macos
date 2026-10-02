@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var log: LogStore
+    @StateObject private var jit = JITManager.shared
     @State private var snapshot = SystemInfo.take()
     @State private var copied = false
 
@@ -33,6 +34,20 @@ struct ContentView: View {
                     }
                 }
                 Section {
+                    row("State", jit.state.label)
+                    Button("Enable JIT with StikDebug") { jit.enableViaStikDebug() }
+                        .disabled(isBusy)
+                    Button("Wait for debugger (manual attach)") { jit.waitForDebuggerManually() }
+                        .disabled(isBusy)
+                    if isBusy {
+                        Button("Cancel", role: .cancel) { jit.cancel() }
+                    }
+                } header: {
+                    Text("JIT (M1b)")
+                } footer: {
+                    Text("Needs StikDebug + LocalDevVPN installed and the VPN on. \"Enable JIT with StikDebug\" opens StikDebug with the universal script. If that does not work, press \"Wait for debugger\", switch to StikDebug, choose VMLab and the universal script. The app will crash if a debugger attaches WITHOUT the universal script.")
+                }
+                Section {
                     NavigationLink("Open log") { LogView() }
                     Button(copied ? "Copied" : "Copy full log") {
                         UIPasteboard.general.string = log.export()
@@ -49,6 +64,13 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("VMLab")
+        }
+    }
+
+    private var isBusy: Bool {
+        switch jit.state {
+        case .waitingForDebugger, .debuggerAttached, .preparing: return true
+        default: return false
         }
     }
 

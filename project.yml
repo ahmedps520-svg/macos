@@ -37,6 +37,7 @@ targets:
       properties:
         CFBundleDisplayName: VMLab
         LSRequiresIPhoneOS: true
+        LSApplicationQueriesSchemes: [stikdebug]
         UIRequiredDeviceCapabilities: [arm64]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
