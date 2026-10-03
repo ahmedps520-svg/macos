@@ -15,8 +15,8 @@ guest showed `connected to renderer` ... `failed to allocate/map ring shmem`. So
 source): the shared ring buffer is created with `shm_open`, which iOS only allows under the app's
 App Group prefix, and our sideloaded IPA has no App Group entitlement. Fix: virglrenderer patch
 `utm/virglrenderer-patches/0001-ios-anon-file-fallback.patch` falls back to an unlinked file in
-UTM's temp directory; CI rebuilds only virglrenderer (build **39c9361** and later). Not yet
-confirmed on device.
+UTM's temp directory; CI rebuilds only virglrenderer (build **39c9361** and later). **Confirmed on
+device 2026-10-03:** `vulkaninfo` lists `Virtio-GPU Venus (Apple M5 GPU)`, Vulkan 1.3.269.
 
 **Install the UTM fork build 39c9361 or newer before repeating the steps below.**
 

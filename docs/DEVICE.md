@@ -119,3 +119,26 @@ Notes from this run:
   (third button) booted the installed system. The first boot shows Debian's boot screen, then
   black for a few minutes, then the login screen.
 - Pressing Return on the installer's Software selection screen accepts the defaults (GNOME).
+
+## M2e — 2026-10-03, UTM fork build 39c9361 (virglrenderer patch 0001), Debian 13.7
+
+**Vulkan reaches the iPad GPU.** `vulkaninfo --summary` on the device:
+
+| Field | GPU0 | GPU1 |
+|---|---|---|
+| deviceName | **Virtio-GPU Venus (Apple M5 GPU)** | llvmpipe (LLVM 19.1.7, 128 bits) |
+| deviceType | INTEGRATED_GPU | CPU (software) |
+| driverName | venus | llvmpipe |
+| apiVersion | **1.3.269** | 1.4.305 |
+| driverInfo | Mesa 25.0.7-2+deb13u1 | Mesa 25.0.7-2+deb13u1 |
+| vendorID / deviceID | 0x106b (Apple) / 0x1b00000a | 0x10005 / 0x0 |
+
+Before the fix (build f6ece4a) Venus connected to the renderer and then failed with
+`failed to allocate/map ring shmem` → `VK_ERROR_OUT_OF_HOST_MEMORY`, because UTM's virglrenderer
+creates that buffer with `shm_open`, which iOS refuses for apps without the App Group entitlement
+(our free-ID sideload). Patch `utm/virglrenderer-patches/0001-ios-anon-file-fallback.patch` falls
+back to an unlinked file in UTM's temp directory; CI rebuilds only virglrenderer.
+
+Path confirmed: guest Mesa venus → virtio-gpu (Venus capset) → QEMU virglrenderer (vkr) →
+MoltenVK (UTM default Vulkan driver) → Metal → Apple M5 GPU. Rendering (`vkcube`) and
+performance not yet measured.
