@@ -140,5 +140,11 @@ creates that buffer with `shm_open`, which iOS refuses for apps without the App 
 back to an unlinked file in UTM's temp directory; CI rebuilds only virglrenderer.
 
 Path confirmed: guest Mesa venus → virtio-gpu (Venus capset) → QEMU virglrenderer (vkr) →
-MoltenVK (UTM default Vulkan driver) → Metal → Apple M5 GPU. Rendering (`vkcube`) and
-performance not yet measured.
+MoltenVK (UTM default Vulkan driver) → Metal → Apple M5 GPU.
+
+`vkcube` (2026-10-03): prints `Selected GPU 0: Virtio-GPU Venus (Apple M5 GPU), type:
+IntegratedGpu` and draws the textured cube in an Xfce window. A 120 FPS camera recording of the
+screen (383 frames, 3.2 s) shows the cube region changing in every captured frame (no
+unchanged frames in between), so it updates far faster than 60 FPS, likely near the 120 Hz display
+rate. Estimate from camera footage only; an exact in-guest FPS counter is still to be read
+(Mesa overlay layer: `VK_INSTANCE_LAYERS=VK_LAYER_MESA_overlay vkcube`).
