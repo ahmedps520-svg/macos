@@ -70,6 +70,9 @@ fails. That is normal before JIT is enabled in M1b.
 
 ## Every 7 days
 
+**Never delete an expired app.** It keeps its data until you delete it. Reinstall the same IPA over it instead. See `REFRESH-AND-RECOVERY.md`.
+
+
 The free certificate expires after 7 days and the app stops opening. Reinstall the same
 IPA with Sideloadly (steps 3–4; the trust step is usually not needed again). Sideloadly
 has an "Automatic App Refreshing" option under its settings that re-signs over Wi-Fi while

@@ -30,6 +30,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `docs/FEASIBILITY.md` — Phase 1 research and verdicts.
 - `docs/SIDELOAD-WINDOWS.md` — how to install a build from Windows.
 - `docs/DEVICE.md` — facts confirmed from logs on the real iPad.
+- `docs/REFRESH-AND-RECOVERY.md` — the 7-day re-sign rule (never delete expired apps) and how to rebuild after a wipe.
 - `docs/JIT-STIKDEBUG.md` — how to enable JIT with StikDebug (M1b).
 - `docs/M1C-BOOT-LINUX.md` — install the UTM fork and boot Alpine Linux (M1c).
 - `docs/M2-GRAPHICS.md` — first GPU test on Alpine (M2d), and why it fell back to software.
