@@ -28,8 +28,10 @@ with it.
 
 Order to rebuild, using the guides already in this folder:
 
-1. **StikDebug**: install with Sideloadly (`JIT-STIKDEBUG.md`, A2), then **iloader › Manage
-   Pairing File › Place** next to StikDebug again (A3). LocalDevVPN usually survives; reinstall
+1. **StikDebug**: install with Sideloadly (`JIT-STIKDEBUG.md`, A2), then put the pairing file back
+   (A3): **idevice_pair** (no Apple ID needed) › Lockdown and Remote pairing › click StikDebug, or
+   iloader › Manage Pairing File › Place. Then trust the developer again in Settings › General ›
+   VPN & Device Management. LocalDevVPN usually survives; reinstall
    from the App Store if not.
 2. **UTM fork**: newest green *Build UTM fork (iOS)* run on GitHub Actions. As of 2026-10-12 that is
    run 37058895443 (`UTM-fork-ipa-39c9361…`, includes the Logs patch and the Vulkan shm fix;

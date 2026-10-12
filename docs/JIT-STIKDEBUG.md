@@ -37,7 +37,14 @@ StikDebug needs a "pairing file" that proves the iPad trusts your PC. It is made
    "Pairing file placed successfully!" in green.
    If VMLab or other apps are listed you can ignore them.
 
-Note: the pairing file expires if you update or reset the iPad. Repeat A3 then.
+Note: the pairing file expires if you update or reset the iPad, and it is deleted if StikDebug is
+deleted. Repeat A3 then.
+
+**Alternative without an Apple ID (worked on 2026-10-12 when iloader's login failed with
+GrandSlam error -80045):** use **idevice_pair**
+(<https://github.com/jkcoxson/idevice_pair/releases/latest/download/idevice_pair--windows-x86_64.exe>).
+Plug in and unlock the iPad, pick it in the dropdown, choose **Lockdown** › **Load**/**Create** ›
+click **StikDebug**; then **Remote pairing** › **Create** › click **StikDebug**. No sign-in needed.
 
 ### A4. First launch of StikDebug
 1. On the iPad, open **LocalDevVPN** and turn the VPN **on** (the VPN icon appears in the status bar).
