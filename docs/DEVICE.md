@@ -148,3 +148,13 @@ screen (383 frames, 3.2 s) shows the cube region changing in every captured fram
 unchanged frames in between), so it updates far faster than 60 FPS, likely near the 120 Hz display
 rate. Estimate from camera footage only; an exact in-guest FPS counter is still to be read
 (Mesa overlay layer: `VK_INSTANCE_LAYERS=VK_LAYER_MESA_overlay vkcube`).
+
+## Reinstall after the 7-day wipe — 2026-10-12, UTM fork build aff82df
+
+- UTM reports about **5081 MB available to the app** (free-ID sideload, no increased-memory-limit).
+- A new Debian 13 VM (Emulate › Linux, ARM64, OpenGL on, 20 GiB, netinst ISO) with **3072 MB**
+  memory showed only a black screen for more than 5 minutes after ▶, with JIT attached
+  (StikDebug legacy). Changing **only** the memory to **2048 MB** made it boot to the Debian
+  installer. Cause not yet known (no log captured); 2048 MB is the confirmed working value.
+- Starting UTM without StikDebug shows "Your version of iOS does not support running VMs while
+  unmodified…"; starting it via StikDebug › Enable JIT › UTM › legacy fixed it.

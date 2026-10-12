@@ -36,8 +36,9 @@ Order to rebuild, using the guides already in this folder:
 2. **UTM fork**: newest green *Build UTM fork (iOS)* run on GitHub Actions. As of 2026-10-12 that is
    run 37058895443 (`UTM-fork-ipa-39c9361…`, includes the Logs patch and the Vulkan shm fix;
    artifact available until 2026-11-01).
-3. **Debian 13 VM**: `M2-DEBIAN.md` (now with the install pitfalls), 3072 MB memory, OpenGL
-   acceleration on. Then `mesa-utils`/`vulkan-tools` to re-check GPU, and continue with
+3. **Debian 13 VM**: `M2-DEBIAN.md` (now with the install pitfalls), **2048 MB** memory, OpenGL
+   acceleration on. (2026-10-12: with 3072 MB the VM stayed black for over 5 minutes from the
+   installer ISO; changing only the memory to 2048 MB made it boot.) Then `mesa-utils`/`vulkan-tools` to re-check GPU, and continue with
    `M3-STEAM.md`.
 4. VMLab is optional now. Skip it if you want to stay within the 3-app limit.
 

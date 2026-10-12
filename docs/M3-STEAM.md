@@ -20,7 +20,8 @@ Steam's client (a Chromium-based UI plus the x86 runtime) needs more than 2 GB.
 
 UTM has about 5 GB available on this iPad (12 GB model, free-ID signing). 3 GB for the VM leaves
 room for QEMU itself. If iPadOS closes UTM during this experiment, that is the memory ceiling: go
-back to 2560 MB and tell me.
+back to 2560 MB and tell me. If the VM screen stays black for more than 5 minutes at 3072 MB
+(this happened on 2026-10-12 with the installer ISO), try 2560 MB, then 2048 MB.
 
 ## 1. Install snap support (Terminal)
 
