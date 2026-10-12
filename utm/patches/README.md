@@ -6,4 +6,4 @@ commit pinned in `../UPSTREAM`. Keep each patch small and single-purpose; name t
 
 | Patch | Purpose |
 |---|---|
-| `0001-vmlab-log-screen.patch` | Captures stdout/stderr (UTM + QEMU output) from app start into memory; adds **Settings › Logs** with Copy, Export and Refresh, showing device, memory and JIT/debugger status. Touches `Platform/Main.swift` and `Platform/iOS/UTMSettingsView.swift` only, so UTM's Xcode project file is not edited. |
+| `0001-vmlab-log-screen.patch` | Captures stdout/stderr (UTM + QEMU output) from app start into memory; adds **Settings › Logs** with Copy, Export and Refresh, showing device, memory and JIT/debugger status (header fixed at the top; the log itself in a UITextView so very long logs don't render blank). Touches `Platform/Main.swift` and `Platform/iOS/UTMSettingsView.swift` only, so UTM's Xcode project file is not edited. |

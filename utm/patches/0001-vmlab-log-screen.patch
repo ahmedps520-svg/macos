@@ -157,10 +157,10 @@ index 09dd6bf..b27b455 100644
 +}
 +#endif
 diff --git a/Platform/iOS/UTMSettingsView.swift b/Platform/iOS/UTMSettingsView.swift
-index 11621fe..a44125a 100644
+index 11621fe..560dd3d 100644
 --- a/Platform/iOS/UTMSettingsView.swift
 +++ b/Platform/iOS/UTMSettingsView.swift
-@@ -39,10 +39,81 @@ struct UTMSettingsView: View {
+@@ -39,10 +39,105 @@ struct UTMSettingsView: View {
                              presentationMode.wrappedValue.dismiss()
                          }
                      }
@@ -182,25 +182,18 @@ index 11621fe..a44125a 100644
 +    @State private var status = VMLabLog.statusText
 +
 +    var body: some View {
-+        ScrollViewReader { proxy in
-+            ScrollView {
-+                VStack(alignment: .leading, spacing: 8) {
-+                    Text(VMLabLog.buildSummary)
-+                        .font(.footnote.bold())
-+                    Text(status)
-+                        .font(.system(.footnote, design: .monospaced))
-+                    Divider()
-+                    Text(log.text.isEmpty ? "(empty)" : log.text)
-+                        .font(.system(.caption, design: .monospaced))
-+                        .frame(maxWidth: .infinity, alignment: .leading)
-+                    Color.clear.frame(height: 1).id("bottom")
-                 }
-+                .padding()
-+            }
-+            .onChange(of: log.text) { _ in
-+                proxy.scrollTo("bottom")
-+            }
++        VStack(alignment: .leading, spacing: 6) {
++            Text(VMLabLog.buildSummary)
++                .font(.footnote.bold())
++            Text(status)
++                .font(.system(.footnote, design: .monospaced))
++            Divider()
++            // A single SwiftUI Text cannot draw a very long log (it exceeds the maximum layer
++            // size and goes blank), so the log uses a UITextView, which tiles its drawing.
++            VMLabLogTextView(text: log.text.isEmpty ? "(empty)" : log.text)
 +        }
++        .padding(.horizontal)
++        .padding(.top, 8)
 +        .navigationTitle("Logs")
 +        .toolbar {
 +            ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -211,7 +204,7 @@ index 11621fe..a44125a 100644
 +                }
 +                Button("Export") {
 +                    exportLog()
-+                }
+                 }
 +                Button("Refresh") {
 +                    status = VMLabLog.statusText
 +                }
@@ -227,7 +220,7 @@ index 11621fe..a44125a 100644
 +        } catch {
 +            log.note("export failed: \(error)")
 +            return
-         }
++        }
 +        let activity = UIActivityViewController(activityItems: [url], applicationActivities: nil)
 +        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first,
 +              let root = (scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first)?.rootViewController else { return }
@@ -236,6 +229,37 @@ index 11621fe..a44125a 100644
 +        activity.popoverPresentationController?.sourceView = top.view
 +        activity.popoverPresentationController?.sourceRect = CGRect(x: top.view.bounds.maxX - 40, y: 40, width: 1, height: 1)
 +        top.present(activity, animated: true)
++    }
++}
++/// Read-only, scrollable, monospaced text view that copes with megabytes of text. Follows the
++/// end of the log while the user is at the bottom; leaves the position alone otherwise.
++struct VMLabLogTextView: UIViewRepresentable {
++    let text: String
++    /// Only the newest part is drawn; Copy/Export always use the full log.
++    private let maxDisplayedCharacters = 400_000
++
++    func makeUIView(context: Context) -> UITextView {
++        let view = UITextView()
++        view.isEditable = false
++        view.isSelectable = true
++        view.alwaysBounceVertical = true
++        view.backgroundColor = .clear
++        view.font = UIFont.monospacedSystemFont(ofSize: 11, weight: .regular)
++        view.textContainerInset = UIEdgeInsets(top: 4, left: 0, bottom: 12, right: 0)
++        return view
++    }
++
++    func updateUIView(_ view: UITextView, context: Context) {
++        let shown = text.utf8.count > maxDisplayedCharacters
++            ? "… (older lines hidden here; Copy/Export include everything)\n" + String(text.suffix(maxDisplayedCharacters))
++            : text
++        guard view.text != shown else { return }
++        let atBottom = view.contentOffset.y + view.bounds.height >= view.contentSize.height - 40
++        view.text = shown
++        if atBottom || view.contentSize.height <= view.bounds.height {
++            let end = NSRange(location: (shown as NSString).length, length: 0)
++            view.scrollRangeToVisible(end)
+         }
      }
  }
 +#endif
