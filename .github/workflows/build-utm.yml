@@ -18,7 +18,7 @@ on:
         default: upstream
 
 permissions:
-  contents: read
+  contents: write   # publish the IPA to GitHub Releases
   actions: read
 
 concurrency:
@@ -178,6 +178,30 @@ jobs:
           path: build/UTM-fork-*.ipa
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish IPA to GitHub Releases
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          TAG="utm-fork-$SHORT"
+          IPA="build/UTM-fork-$SHORT.ipa"
+          NOTES="Unsigned UTM fork build for sideloading (Sideloadly, free Apple ID).
+
+          - Upstream: UTM $UTM_TAG ($UTM_COMMIT)
+          - Fork commit: $GITHUB_SHA (branch ${GITHUB_REF_NAME})
+          - Patches: $(ls utm/patches/*.patch utm/virglrenderer-patches/*.patch 2>/dev/null | xargs -n1 basename | tr '\n' ' ')
+          - CI run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          Download the .ipa below and install it with Sideloadly. Never delete an expired copy; reinstall over it (docs/REFRESH-AND-RECOVERY.md)."
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$IPA" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$IPA" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "UTM fork $SHORT (UTM $UTM_TAG)" --notes "$NOTES" --latest
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets --jq '.url, (.assets[] | "\(.name) \(.size)")'
 
       - name: Upload build log
         if: always()

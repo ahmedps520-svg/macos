@@ -16,7 +16,9 @@ later.
 
 ## 1. Install the UTM fork (PC)
 
-1. Open <https://github.com/ahmedps520-svg/macos/actions> and click the newest green run named
+1. Easiest: open <https://github.com/ahmedps520-svg/macos/releases>, take the **Latest** release
+   and download its `.ipa` (skip steps 2's zip handling). Otherwise: open
+   <https://github.com/ahmedps520-svg/macos/actions> and click the newest green run named
    **Build UTM fork (iOS)**.
 2. Under **Artifacts**, download **UTM-fork-ipa-…** (about 145 MB zipped) and extract it.
    Inside is `UTM-fork-xxxxxxx.ipa`.

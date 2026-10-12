@@ -39,6 +39,13 @@ Order to rebuild, using the guides already in this folder:
    `M3-STEAM.md`.
 4. VMLab is optional now. Skip it if you want to stay within the 3-app limit.
 
+## Where to download builds
+
+Every UTM fork build from now on is also published at
+**<https://github.com/ahmedps520-svg/macos/releases>** as a plain `.ipa` (no zip, no 30-day
+expiry). The newest one is marked **Latest**. Download the `.ipa` under *Assets* and give it to
+Sideloadly directly.
+
 ## When the build artifacts expire
 
 GitHub keeps build downloads for 30 days. To get a fresh one: Actions › **Build UTM fork (iOS)** ›
