@@ -16,7 +16,10 @@ guest** under QEMU with JIT, building on UTM's engine.
 | M1c | Boot an ARM64 Linux guest and show its framebuffer | **done** (Alpine 3.24 aarch64 booted in the UTM fork on device 2026-10-02) |
 | M2d | GPU: OpenGL in the guest rendered by the iPad GPU (virgl → ANGLE → Metal) | **done** (Debian 13 + `glxinfo`: virgl, `glxgears` ~870 FPS, on device 2026-10-02) |
 | M2e | Vulkan in the guest via Venus (MoltenVK/KosmicKrisp → Metal) | **done** (`Virtio-GPU Venus (Apple M5 GPU)`, Vulkan 1.3, `vkcube` renders smoothly, on device 2026-10-03, after our virglrenderer shm fix) |
-| M3a | Steam client (x86, via the ARM64 Steam snap + FEX) starts in the Debian VM | in progress |
+| M3a | Steam client (x86, via the ARM64 Steam snap + FEX) starts in the Debian VM | **not reached** (paused 2026-10-12 during the Debian reinstall; see the report for the lighter plan) |
+
+**Full write-up of what worked, what didn't, and the plan for a lighter redo:
+[docs/PROJECT-REPORT.md](docs/PROJECT-REPORT.md).**
 
 ## Layout
 
@@ -27,6 +30,7 @@ guest** under QEMU with JIT, building on UTM's engine.
 - `utm/UPSTREAM`, `utm/patches/` — our UTM fork: a pinned upstream UTM commit plus a patch series.
 - `utm/virglrenderer-patches/`, `utm/rebuild_virglrenderer.sh` — patches to UTM's GPU library and the CI step that rebuilds only that library.
 - `.github/workflows/build-utm.yml` — builds the UTM fork into an unsigned `UTM-fork-*.ipa`.
+- `docs/PROJECT-REPORT.md` — scorecard, timeline, what worked / didn't, limits found, and the lightweight redo plan.
 - `docs/FEASIBILITY.md` — Phase 1 research and verdicts.
 - `docs/SIDELOAD-WINDOWS.md` — how to install a build from Windows.
 - `docs/DEVICE.md` — facts confirmed from logs on the real iPad.
@@ -40,5 +44,6 @@ guest** under QEMU with JIT, building on UTM's engine.
 
 Nothing here is confirmed to work until CI is green **and** it has been verified on the device.
 
-**Next:** later-phase milestones (persistence, networking, memory ceiling, GPU) are proposed
-but not started; each will be one small, device-confirmed step.
+**Next (proposed, not started):** stream Steam from the PC as a parallel path; benchmark the
+emulated CPU; build a slim prebuilt guest image in CI; native GPU program; then FEX and Steam
+(`docs/PROJECT-REPORT.md`, section 7).
